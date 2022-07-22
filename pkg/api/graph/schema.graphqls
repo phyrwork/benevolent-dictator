@@ -1,0 +1,53 @@
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+  | FIELD_DEFINITION
+
+type PageInfo {
+  hasPreviousPage: Boolean!
+  hasNextPage: Boolean!
+  startCursor: ID
+  endCursor: ID
+}
+
+type User {
+  id: ID!
+  name: String!
+  rules(limit: Int! = 20, after: Int! = 0): RulePage!  @goField(forceResolver: true)
+  likes(limit: Int! = 20, after: Int! = 0): RulePage!  @goField(forceResolver: true)
+}
+
+type UserPage {
+  users: [User!]!
+  pageInfo: PageInfo!
+}
+
+type Rule {
+  id: ID!
+  user: User!  @goField(forceResolver: true)
+  created: String!
+  summary: String!
+  detail: String
+  likes(limit: Int! = 20, after: Int! = 0): UserPage!  @goField(forceResolver: true)
+}
+
+type RulePage {
+  rules: [Rule!]!
+  pageInfo: PageInfo!
+}
+
+type LikesUpdate {
+  added: [Int!]!
+  removed: [Int!]!
+}
+
+type Query {
+  users(limit: Int! = 20, after: Int! = 0, name: String): UserPage!
+  rules(limit: Int! = 20, after: Int! = 0, userId: ID): RulePage!
+}
+
+type Mutation {
+  userCreate(name: String!): User!
+  userUpdate(name: String): User!
+  ruleCreate(summary: String!, detail: String): Rule!
+  ruleDelete(id: ID!): ID
+  likesUpdate(add: [ID!], remove: [ID!]): LikesUpdate
+}
