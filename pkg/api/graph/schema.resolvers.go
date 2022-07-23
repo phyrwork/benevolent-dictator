@@ -10,7 +10,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/auth"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/database"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/graph/generated"
@@ -84,20 +83,13 @@ func (r *mutationResolver) UserLogin(ctx context.Context, email string, password
 	if bytes.Compare(key, user.Key) != 0 {
 		return nil, fmt.Errorf("password error")
 	}
-	now := time.Now()
-	claims := model.UserClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: now.Add(time.Hour * 24).Unix(),
-			Issuer:    string(auth.Issuer),
-			IssuedAt:  now.Unix(),
-		},
-		UserID: user.ID,
+	token, expiresAt, err := auth.Token(user.ID, time.Hour*24)
+	if err != nil {
+		return nil, fmt.Errorf("token error: %w", err)
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString(auth.Issuer)
 	return &model.UserToken{
-		Token:     signedToken,
-		ExpiresAt: int(claims.ExpiresAt),
+		Token:     token,
+		ExpiresAt: expiresAt,
 	}, nil
 }
 

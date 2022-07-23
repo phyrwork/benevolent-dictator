@@ -1,6 +1,8 @@
 package graph
 
-import "github.com/phyrwork/benevolent-dictator/pkg/api/database"
+import (
+	"github.com/phyrwork/benevolent-dictator/pkg/api/database"
+)
 
 // This file will not be regenerated automatically.
 //

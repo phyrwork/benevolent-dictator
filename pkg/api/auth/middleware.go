@@ -2,10 +2,14 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"github.com/golang-jwt/jwt"
-	"github.com/phyrwork/benevolent-dictator/pkg/api/graph/model"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type contextKey struct {
@@ -16,13 +20,32 @@ var userCtxKey = &contextKey{
 	name: "auth",
 }
 
-var Issuer = []byte("github.com/phyrwork") // TODO: Is this a reasonable definition?
+type UserClaims struct {
+	UserID int `json:"userId"`
+	jwt.StandardClaims
+}
 
 type UserAuth struct {
 	UserID int
 }
 
-func Middleware(next http.Handler) http.Handler {
+var signKey *rsa.PrivateKey
+
+func Token(userId int, expiresIn time.Duration) (string, int, error) {
+	now := time.Now()
+	claims := UserClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: now.Add(expiresIn).Unix(),
+			IssuedAt:  now.Unix(),
+		},
+		UserID: userId,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	signedToken, err := token.SignedString(x509.MarshalPKCS1PrivateKey(signKey))
+	return signedToken, int(claims.StandardClaims.ExpiresAt), err
+}
+
+func Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract token from header.
 		header := r.Header.Get("Authorization")
@@ -31,12 +54,14 @@ func Middleware(next http.Handler) http.Handler {
 			bearer = parts[1]
 		}
 		// Parse token to claims.
-		var claims *model.UserClaims
-		token, err := jwt.ParseWithClaims(bearer, &model.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return Issuer, nil
+		var claims *UserClaims
+		token, err := jwt.ParseWithClaims(bearer, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return x509.MarshalPKCS1PrivateKey(signKey), nil
 		})
-		if err == nil && token.Valid {
-			claims = token.Claims.(*model.UserClaims)
+		if err != nil {
+			log.Print(err)
+		} else if token.Valid {
+			claims = token.Claims.(*UserClaims)
 		}
 		// Store user auth in context.
 		if claims != nil {
@@ -55,4 +80,13 @@ func ForContext(ctx context.Context) *UserAuth {
 		return raw.(*UserAuth)
 	}
 	return nil
+}
+
+func init() {
+	var err error
+	// TODO: Load a persistent key from
+	signKey, err = rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		log.Fatalf("error generating sign key: %v", err)
+	}
 }
