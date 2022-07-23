@@ -45,7 +45,27 @@ func (r *mutationResolver) UserCreate(ctx context.Context, name string, email st
 
 // UserUpdate is the resolver for the userUpdate field.
 func (r *mutationResolver) UserUpdate(ctx context.Context, name *string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	userAuth := auth.ForContext(ctx)
+	if userAuth == nil {
+		return nil, fmt.Errorf("unauthorized")
+	}
+	user := database.User{
+		ID: userAuth.UserID,
+	}
+	do := false
+	if name != nil {
+		user.Name = *name
+		do = true
+	}
+	if do {
+		if err := r.DB.WithContext(ctx).Updates(&user).Error; err != nil {
+			return nil, fmt.Errorf("database error: %w", err)
+		}
+	}
+	return &model.User{
+		ID:   user.ID,
+		Name: user.Name,
+	}, nil
 }
 
 // UserLogin is the resolver for the userLogin field.
