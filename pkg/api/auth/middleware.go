@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"github.com/golang-jwt/jwt"
 	"log"
 	"net/http"
@@ -30,6 +29,7 @@ type UserAuth struct {
 }
 
 var signKey *rsa.PrivateKey
+var verifyKey *rsa.PublicKey
 
 func Token(userId int, expiresIn time.Duration) (string, int, error) {
 	now := time.Now()
@@ -41,7 +41,7 @@ func Token(userId int, expiresIn time.Duration) (string, int, error) {
 		UserID: userId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	signedToken, err := token.SignedString(x509.MarshalPKCS1PrivateKey(signKey))
+	signedToken, err := token.SignedString(signKey)
 	return signedToken, int(claims.StandardClaims.ExpiresAt), err
 }
 
@@ -56,10 +56,10 @@ func Handle(next http.Handler) http.Handler {
 		// Parse token to claims.
 		var claims *UserClaims
 		token, err := jwt.ParseWithClaims(bearer, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return x509.MarshalPKCS1PrivateKey(signKey), nil
+			return verifyKey, nil
 		})
 		if err != nil {
-			log.Print(err)
+			log.Print(err) // TODO: improve error message
 		} else if token.Valid {
 			claims = token.Claims.(*UserClaims)
 		}
@@ -89,4 +89,5 @@ func init() {
 	if err != nil {
 		log.Fatalf("error generating sign key: %v", err)
 	}
+	verifyKey = &signKey.PublicKey
 }
