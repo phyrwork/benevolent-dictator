@@ -15,6 +15,11 @@ type User {
   likes(limit: Int! = 20, after: Int! = 0): RulePage!  @goField(forceResolver: true)
 }
 
+type UserToken {
+  token: String!
+  expiresAt: Int!
+}
+
 type UserPage {
   users: [User!]!
   pageInfo: PageInfo!
@@ -45,8 +50,9 @@ type Query {
 }
 
 type Mutation {
-  userCreate(name: String!): User!
+  userCreate(name: String!, email: String!, password: String!): User!
   userUpdate(name: String): User!
+  userLogin(email: String!, password: String!): UserToken!
   ruleCreate(summary: String!, detail: String): Rule!
   ruleDelete(id: ID!): ID
   likesUpdate(add: [ID!], remove: [ID!]): LikesUpdate

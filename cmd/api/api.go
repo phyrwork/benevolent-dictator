@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/phyrwork/benevolent-dictator/pkg/api/auth"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/database"
 	"log"
 	"net/http"
@@ -33,9 +34,12 @@ func main() {
 	}
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
+	mux := http.NewServeMux()
+	mux.Handle("/query", auth.Middleware(srv))
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, mux))
 }

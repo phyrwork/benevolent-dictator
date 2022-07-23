@@ -4,11 +4,14 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/golang-jwt/jwt"
+	"github.com/phyrwork/benevolent-dictator/pkg/api/auth"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/database"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/graph/generated"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/graph/model"
@@ -17,10 +20,20 @@ import (
 )
 
 // UserCreate is the resolver for the userCreate field.
-func (r *mutationResolver) UserCreate(ctx context.Context, name string) (*model.User, error) {
-	row := database.User{
-		Name: name,
+func (r *mutationResolver) UserCreate(ctx context.Context, name string, email string, password string) (*model.User, error) {
+	// Prepare password.
+	key, salt, err := auth.Encode([]byte(password))
+	if err != nil {
+		return nil, fmt.Errorf("password encode error: %v", err)
 	}
+	// Create user.
+	row := database.User{
+		Name:  name,
+		Email: email,
+		Key:   key,
+		Salt:  salt,
+	}
+	// TODO: check for unique email first?
 	if err := r.DB.WithContext(ctx).Create(&row).Error; err != nil {
 		return nil, fmt.Errorf("database error: %v", err)
 	}
@@ -35,10 +48,47 @@ func (r *mutationResolver) UserUpdate(ctx context.Context, name *string) (*model
 	panic(fmt.Errorf("not implemented"))
 }
 
+// UserLogin is the resolver for the userLogin field.
+func (r *mutationResolver) UserLogin(ctx context.Context, email string, password string) (*model.UserToken, error) {
+	user := database.User{Email: email}
+	if err := r.DB.WithContext(ctx).Where(&user).First(&user).Error; err != nil {
+		switch err {
+		case gorm.ErrRecordNotFound:
+			err = fmt.Errorf("user %s not found", email)
+		default:
+			err = fmt.Errorf("database error: %w", err)
+		}
+		return nil, err
+	}
+	key := auth.Key([]byte(password), user.Salt)
+	if bytes.Compare(key, user.Key) != 0 {
+		return nil, fmt.Errorf("password error")
+	}
+	now := time.Now()
+	claims := model.UserClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: now.Add(time.Hour * 24).Unix(),
+			Issuer:    string(auth.Issuer),
+			IssuedAt:  now.Unix(),
+		},
+		UserID: user.ID,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, _ := token.SignedString(auth.Issuer)
+	return &model.UserToken{
+		Token:     signedToken,
+		ExpiresAt: int(claims.ExpiresAt),
+	}, nil
+}
+
 // RuleCreate is the resolver for the ruleCreate field.
 func (r *mutationResolver) RuleCreate(ctx context.Context, summary string, detail *string) (*model.Rule, error) {
+	userAuth := auth.ForContext(ctx)
+	if userAuth == nil {
+		return nil, fmt.Errorf("unauthorized")
+	}
 	row := database.Rule{
-		UserID:  1, // TODO: Current user.
+		UserID:  userAuth.UserID,
 		Created: time.Now(),
 		Summary: summary,
 		Detail:  detail,
@@ -55,10 +105,14 @@ func (r *mutationResolver) RuleCreate(ctx context.Context, summary string, detai
 
 // RuleDelete is the resolver for the ruleDelete field.
 func (r *mutationResolver) RuleDelete(ctx context.Context, id int) (*int, error) {
+	userAuth := auth.ForContext(ctx)
+	if userAuth == nil {
+		return nil, fmt.Errorf("unauthorized")
+	}
 	var rows []database.Rule
 	err := r.DB.WithContext(ctx).
 		Clauses(clause.Returning{}).
-		Where(&database.Rule{ID: id, UserID: 1}). // TODO: Current user.
+		Where(&database.Rule{ID: id, UserID: userAuth.UserID}).
 		Delete(&rows).Error
 	if err != nil {
 		return nil, err
@@ -76,6 +130,11 @@ func (r *mutationResolver) RuleDelete(ctx context.Context, id int) (*int, error)
 
 // LikesUpdate is the resolver for the likesUpdate field.
 func (r *mutationResolver) LikesUpdate(ctx context.Context, add []int, remove []int) (*model.LikesUpdate, error) {
+	userAuth := auth.ForContext(ctx)
+	if userAuth == nil {
+		return nil, fmt.Errorf("unauthorized")
+	}
+
 	addMap := make(map[int]struct{})
 	for _, id := range add {
 		addMap[id] = struct{}{}
@@ -97,7 +156,7 @@ func (r *mutationResolver) LikesUpdate(ctx context.Context, add []int, remove []
 		toRows := func(ids []int) []database.Like {
 			likes := make([]database.Like, len(ids))
 			for i, id := range ids {
-				likes[i].UserID = 1 // TODO: Current user
+				likes[i].UserID = userAuth.UserID
 				likes[i].RuleID = id
 			}
 			return likes

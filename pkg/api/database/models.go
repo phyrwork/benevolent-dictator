@@ -8,6 +8,9 @@ import (
 type User struct {
 	ID    int    `gorm:"primaryKey;not null"`
 	Name  string `gorm:"unique;not null"`
+	Email string `gorm:"unique;not null"`
+	Salt  []byte `gorm:"not null"`
+	Key   []byte `gorm:"not null"`
 	Likes []Rule `gorm:"many2many:likes"`
 }
 

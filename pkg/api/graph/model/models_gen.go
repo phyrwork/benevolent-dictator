@@ -39,3 +39,8 @@ type UserPage struct {
 	Users    []*User   `json:"users"`
 	PageInfo *PageInfo `json:"pageInfo"`
 }
+
+type UserToken struct {
+	Token     string `json:"token"`
+	ExpiresAt int    `json:"expiresAt"`
+}
