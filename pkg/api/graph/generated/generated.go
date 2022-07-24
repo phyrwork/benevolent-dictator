@@ -52,12 +52,12 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		LikesUpdate func(childComplexity int, add []int, remove []int) int
-		RuleCreate  func(childComplexity int, summary string, detail *string) int
-		RuleDelete  func(childComplexity int, id int) int
-		UserCreate  func(childComplexity int, name string, email string, password string) int
-		UserLogin   func(childComplexity int, email string, password string) int
-		UserUpdate  func(childComplexity int, name *string) int
+		CreateRule func(childComplexity int, summary string, detail *string) int
+		CreateUser func(childComplexity int, name string, email string, password string) int
+		DeleteRule func(childComplexity int, id int) int
+		Like       func(childComplexity int, add []int, remove []int) int
+		Login      func(childComplexity int, email string, password string) int
+		UpdateUser func(childComplexity int, name *string) int
 	}
 
 	PageInfo struct {
@@ -105,12 +105,12 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	UserCreate(ctx context.Context, name string, email string, password string) (*model.User, error)
-	UserUpdate(ctx context.Context, name *string) (*model.User, error)
-	UserLogin(ctx context.Context, email string, password string) (*model.UserToken, error)
-	RuleCreate(ctx context.Context, summary string, detail *string) (*model.Rule, error)
-	RuleDelete(ctx context.Context, id int) (*int, error)
-	LikesUpdate(ctx context.Context, add []int, remove []int) (*model.LikesUpdate, error)
+	CreateUser(ctx context.Context, name string, email string, password string) (*model.User, error)
+	UpdateUser(ctx context.Context, name *string) (*model.User, error)
+	Login(ctx context.Context, email string, password string) (*model.UserToken, error)
+	CreateRule(ctx context.Context, summary string, detail *string) (*model.Rule, error)
+	DeleteRule(ctx context.Context, id int) (*int, error)
+	Like(ctx context.Context, add []int, remove []int) (*model.LikesUpdate, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, limit int, after int, name *string) (*model.UserPage, error)
@@ -155,77 +155,77 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.LikesUpdate.Removed(childComplexity), true
 
-	case "Mutation.likesUpdate":
-		if e.complexity.Mutation.LikesUpdate == nil {
+	case "Mutation.createRule":
+		if e.complexity.Mutation.CreateRule == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_likesUpdate_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createRule_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.LikesUpdate(childComplexity, args["add"].([]int), args["remove"].([]int)), true
+		return e.complexity.Mutation.CreateRule(childComplexity, args["summary"].(string), args["detail"].(*string)), true
 
-	case "Mutation.ruleCreate":
-		if e.complexity.Mutation.RuleCreate == nil {
+	case "Mutation.createUser":
+		if e.complexity.Mutation.CreateUser == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_ruleCreate_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createUser_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RuleCreate(childComplexity, args["summary"].(string), args["detail"].(*string)), true
+		return e.complexity.Mutation.CreateUser(childComplexity, args["name"].(string), args["email"].(string), args["password"].(string)), true
 
-	case "Mutation.ruleDelete":
-		if e.complexity.Mutation.RuleDelete == nil {
+	case "Mutation.deleteRule":
+		if e.complexity.Mutation.DeleteRule == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_ruleDelete_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteRule_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RuleDelete(childComplexity, args["id"].(int)), true
+		return e.complexity.Mutation.DeleteRule(childComplexity, args["id"].(int)), true
 
-	case "Mutation.userCreate":
-		if e.complexity.Mutation.UserCreate == nil {
+	case "Mutation.like":
+		if e.complexity.Mutation.Like == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_userCreate_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_like_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UserCreate(childComplexity, args["name"].(string), args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.Like(childComplexity, args["add"].([]int), args["remove"].([]int)), true
 
-	case "Mutation.userLogin":
-		if e.complexity.Mutation.UserLogin == nil {
+	case "Mutation.login":
+		if e.complexity.Mutation.Login == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_userLogin_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UserLogin(childComplexity, args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["password"].(string)), true
 
-	case "Mutation.userUpdate":
-		if e.complexity.Mutation.UserUpdate == nil {
+	case "Mutation.updateUser":
+		if e.complexity.Mutation.UpdateUser == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_userUpdate_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateUser_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UserUpdate(childComplexity, args["name"].(*string)), true
+		return e.complexity.Mutation.UpdateUser(childComplexity, args["name"].(*string)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -525,12 +525,12 @@ type Query {
 }
 
 type Mutation {
-  userCreate(name: String!, email: String!, password: String!): User!
-  userUpdate(name: String): User!
-  userLogin(email: String!, password: String!): UserToken!
-  ruleCreate(summary: String!, detail: String): Rule!
-  ruleDelete(id: ID!): ID
-  likesUpdate(add: [ID!], remove: [ID!]): LikesUpdate
+  createUser(name: String!, email: String!, password: String!): User!
+  updateUser(name: String): User!
+  login(email: String!, password: String!): UserToken!
+  createRule(summary: String!, detail: String): Rule!
+  deleteRule(id: ID!): ID
+  like(add: [ID!], remove: [ID!]): LikesUpdate
 }
 `, BuiltIn: false},
 }
@@ -540,31 +540,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_likesUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 []int
-	if tmp, ok := rawArgs["add"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("add"))
-		arg0, err = ec.unmarshalOID2ᚕintᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["add"] = arg0
-	var arg1 []int
-	if tmp, ok := rawArgs["remove"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remove"))
-		arg1, err = ec.unmarshalOID2ᚕintᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["remove"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_ruleCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createRule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -588,22 +564,7 @@ func (ec *executionContext) field_Mutation_ruleCreate_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_ruleDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 int
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_userCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -636,7 +597,46 @@ func (ec *executionContext) field_Mutation_userCreate_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_userLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteRule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_like_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []int
+	if tmp, ok := rawArgs["add"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("add"))
+		arg0, err = ec.unmarshalOID2ᚕintᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["add"] = arg0
+	var arg1 []int
+	if tmp, ok := rawArgs["remove"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remove"))
+		arg1, err = ec.unmarshalOID2ᚕintᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["remove"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -660,7 +660,7 @@ func (ec *executionContext) field_Mutation_userLogin_args(ctx context.Context, r
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_userUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
@@ -954,8 +954,8 @@ func (ec *executionContext) fieldContext_LikesUpdate_removed(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_userCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_userCreate(ctx, field)
+func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createUser(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -968,7 +968,7 @@ func (ec *executionContext) _Mutation_userCreate(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UserCreate(rctx, fc.Args["name"].(string), fc.Args["email"].(string), fc.Args["password"].(string))
+		return ec.resolvers.Mutation().CreateUser(rctx, fc.Args["name"].(string), fc.Args["email"].(string), fc.Args["password"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -985,7 +985,7 @@ func (ec *executionContext) _Mutation_userCreate(ctx context.Context, field grap
 	return ec.marshalNUser2ᚖgithubᚗcomᚋphyrworkᚋbenevolentᚑdictatorᚋpkgᚋapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_userCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1012,15 +1012,15 @@ func (ec *executionContext) fieldContext_Mutation_userCreate(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_userCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_userUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_userUpdate(ctx, field)
+func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateUser(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1033,7 +1033,7 @@ func (ec *executionContext) _Mutation_userUpdate(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UserUpdate(rctx, fc.Args["name"].(*string))
+		return ec.resolvers.Mutation().UpdateUser(rctx, fc.Args["name"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1050,7 +1050,7 @@ func (ec *executionContext) _Mutation_userUpdate(ctx context.Context, field grap
 	return ec.marshalNUser2ᚖgithubᚗcomᚋphyrworkᚋbenevolentᚑdictatorᚋpkgᚋapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_userUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1077,15 +1077,15 @@ func (ec *executionContext) fieldContext_Mutation_userUpdate(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_userUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_userLogin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_userLogin(ctx, field)
+func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_login(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1098,7 +1098,7 @@ func (ec *executionContext) _Mutation_userLogin(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UserLogin(rctx, fc.Args["email"].(string), fc.Args["password"].(string))
+		return ec.resolvers.Mutation().Login(rctx, fc.Args["email"].(string), fc.Args["password"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1115,7 +1115,7 @@ func (ec *executionContext) _Mutation_userLogin(ctx context.Context, field graph
 	return ec.marshalNUserToken2ᚖgithubᚗcomᚋphyrworkᚋbenevolentᚑdictatorᚋpkgᚋapiᚋgraphᚋmodelᚐUserToken(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_userLogin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1138,15 +1138,15 @@ func (ec *executionContext) fieldContext_Mutation_userLogin(ctx context.Context,
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_userLogin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_ruleCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_ruleCreate(ctx, field)
+func (ec *executionContext) _Mutation_createRule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createRule(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1159,7 +1159,7 @@ func (ec *executionContext) _Mutation_ruleCreate(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RuleCreate(rctx, fc.Args["summary"].(string), fc.Args["detail"].(*string))
+		return ec.resolvers.Mutation().CreateRule(rctx, fc.Args["summary"].(string), fc.Args["detail"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1176,7 +1176,7 @@ func (ec *executionContext) _Mutation_ruleCreate(ctx context.Context, field grap
 	return ec.marshalNRule2ᚖgithubᚗcomᚋphyrworkᚋbenevolentᚑdictatorᚋpkgᚋapiᚋgraphᚋmodelᚐRule(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_ruleCreate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createRule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1207,15 +1207,15 @@ func (ec *executionContext) fieldContext_Mutation_ruleCreate(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_ruleCreate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_ruleDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_ruleDelete(ctx, field)
+func (ec *executionContext) _Mutation_deleteRule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRule(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1228,7 +1228,7 @@ func (ec *executionContext) _Mutation_ruleDelete(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RuleDelete(rctx, fc.Args["id"].(int))
+		return ec.resolvers.Mutation().DeleteRule(rctx, fc.Args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1242,7 +1242,7 @@ func (ec *executionContext) _Mutation_ruleDelete(ctx context.Context, field grap
 	return ec.marshalOID2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_ruleDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteRule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1259,15 +1259,15 @@ func (ec *executionContext) fieldContext_Mutation_ruleDelete(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_ruleDelete_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_likesUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_likesUpdate(ctx, field)
+func (ec *executionContext) _Mutation_like(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_like(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1280,7 +1280,7 @@ func (ec *executionContext) _Mutation_likesUpdate(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().LikesUpdate(rctx, fc.Args["add"].([]int), fc.Args["remove"].([]int))
+		return ec.resolvers.Mutation().Like(rctx, fc.Args["add"].([]int), fc.Args["remove"].([]int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1294,7 +1294,7 @@ func (ec *executionContext) _Mutation_likesUpdate(ctx context.Context, field gra
 	return ec.marshalOLikesUpdate2ᚖgithubᚗcomᚋphyrworkᚋbenevolentᚑdictatorᚋpkgᚋapiᚋgraphᚋmodelᚐLikesUpdate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_likesUpdate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_like(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1317,7 +1317,7 @@ func (ec *executionContext) fieldContext_Mutation_likesUpdate(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_likesUpdate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_like_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4386,52 +4386,52 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "userCreate":
+		case "createUser":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_userCreate(ctx, field)
+				return ec._Mutation_createUser(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "userUpdate":
+		case "updateUser":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_userUpdate(ctx, field)
+				return ec._Mutation_updateUser(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "userLogin":
+		case "login":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_userLogin(ctx, field)
+				return ec._Mutation_login(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "ruleCreate":
+		case "createRule":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_ruleCreate(ctx, field)
+				return ec._Mutation_createRule(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "ruleDelete":
+		case "deleteRule":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_ruleDelete(ctx, field)
+				return ec._Mutation_deleteRule(ctx, field)
 			})
 
-		case "likesUpdate":
+		case "like":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_likesUpdate(ctx, field)
+				return ec._Mutation_like(ctx, field)
 			})
 
 		default:

@@ -50,10 +50,10 @@ type Query {
 }
 
 type Mutation {
-  userCreate(name: String!, email: String!, password: String!): User!
-  userUpdate(name: String): User!
-  userLogin(email: String!, password: String!): UserToken!
-  ruleCreate(summary: String!, detail: String): Rule!
-  ruleDelete(id: ID!): ID
-  likesUpdate(add: [ID!], remove: [ID!]): LikesUpdate
+  createUser(name: String!, email: String!, password: String!): User!
+  updateUser(name: String): User!
+  login(email: String!, password: String!): UserToken!
+  createRule(summary: String!, detail: String): Rule!
+  deleteRule(id: ID!): ID
+  like(add: [ID!], remove: [ID!]): LikesUpdate
 }

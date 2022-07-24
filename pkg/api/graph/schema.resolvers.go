@@ -19,7 +19,7 @@ import (
 )
 
 // UserCreate is the resolver for the userCreate field.
-func (r *mutationResolver) UserCreate(ctx context.Context, name string, email string, password string) (*model.User, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, name string, email string, password string) (*model.User, error) {
 	// Prepare password.
 	key, salt, err := auth.Encode([]byte(password))
 	if err != nil {
@@ -43,7 +43,7 @@ func (r *mutationResolver) UserCreate(ctx context.Context, name string, email st
 }
 
 // UserUpdate is the resolver for the userUpdate field.
-func (r *mutationResolver) UserUpdate(ctx context.Context, name *string) (*model.User, error) {
+func (r *mutationResolver) UpdateUser(ctx context.Context, name *string) (*model.User, error) {
 	userAuth := auth.ForContext(ctx)
 	if userAuth == nil {
 		return nil, fmt.Errorf("unauthorized")
@@ -68,7 +68,7 @@ func (r *mutationResolver) UserUpdate(ctx context.Context, name *string) (*model
 }
 
 // UserLogin is the resolver for the userLogin field.
-func (r *mutationResolver) UserLogin(ctx context.Context, email string, password string) (*model.UserToken, error) {
+func (r *mutationResolver) Login(ctx context.Context, email string, password string) (*model.UserToken, error) {
 	user := database.User{Email: email}
 	if err := r.DB.WithContext(ctx).Where(&user).First(&user).Error; err != nil {
 		switch err {
@@ -94,7 +94,7 @@ func (r *mutationResolver) UserLogin(ctx context.Context, email string, password
 }
 
 // RuleCreate is the resolver for the ruleCreate field.
-func (r *mutationResolver) RuleCreate(ctx context.Context, summary string, detail *string) (*model.Rule, error) {
+func (r *mutationResolver) CreateRule(ctx context.Context, summary string, detail *string) (*model.Rule, error) {
 	userAuth := auth.ForContext(ctx)
 	if userAuth == nil {
 		return nil, fmt.Errorf("unauthorized")
@@ -116,7 +116,7 @@ func (r *mutationResolver) RuleCreate(ctx context.Context, summary string, detai
 }
 
 // RuleDelete is the resolver for the ruleDelete field.
-func (r *mutationResolver) RuleDelete(ctx context.Context, id int) (*int, error) {
+func (r *mutationResolver) DeleteRule(ctx context.Context, id int) (*int, error) {
 	userAuth := auth.ForContext(ctx)
 	if userAuth == nil {
 		return nil, fmt.Errorf("unauthorized")
@@ -141,7 +141,7 @@ func (r *mutationResolver) RuleDelete(ctx context.Context, id int) (*int, error)
 }
 
 // LikesUpdate is the resolver for the likesUpdate field.
-func (r *mutationResolver) LikesUpdate(ctx context.Context, add []int, remove []int) (*model.LikesUpdate, error) {
+func (r *mutationResolver) Like(ctx context.Context, add []int, remove []int) (*model.LikesUpdate, error) {
 	userAuth := auth.ForContext(ctx)
 	if userAuth == nil {
 		return nil, fmt.Errorf("unauthorized")
