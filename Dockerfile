@@ -20,7 +20,7 @@ RUN cd cmd/api && go build
 ##
 ## Deploy
 ##
-FROM ubuntu:20.04
+FROM gcr.io/distroless/base-debian10
 
 WORKDIR /
 
@@ -28,4 +28,6 @@ COPY --from=build /app/cmd/api/api /usr/local/bin/api
 
 EXPOSE 8080
 
-ENTRYPOINT /usr/local/bin/api
+USER nonroot:nonroot
+
+ENTRYPOINT ["/usr/local/bin/api"]
