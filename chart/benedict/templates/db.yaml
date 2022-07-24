@@ -77,7 +77,6 @@ metadata:
   labels:
     app: db
 spec:
-  type: NodePort
   ports:
     - port: 5432
   selector:
