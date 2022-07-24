@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: benedict
+          image: registry.digitalocean.com/phyrwork/benedict
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 8080
