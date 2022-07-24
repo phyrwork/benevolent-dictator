@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/auth"
 	"github.com/phyrwork/benevolent-dictator/pkg/api/database"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -21,13 +24,26 @@ func main() {
 		port = defaultPort
 	}
 
-	db, err := database.Open("")
-	if err != nil {
-		log.Fatalf("database open error: %v", err)
+	dsn := fmt.Sprintf(
+		"host=%s user=dictator password=dictator dbname=dictator sslmode=disable",
+		os.Getenv("DB_SERVICE_HOST"))
+	log.Printf("database dsn=%s", dsn)
+
+	var err error
+	var db *gorm.DB
+	for db == nil {
+		db, err = database.Open(dsn)
+		if db == nil {
+			break
+		}
+		log.Printf("database open error: %v", err)
+		time.Sleep(time.Second * 3)
 	}
+	log.Printf("database open ok")
 	if err = database.Migrate(db); err != nil {
 		log.Fatalf("database migrate error: %v", err)
 	}
+	log.Printf("database migration ok")
 
 	resolver := &graph.Resolver{
 		DB: db,
