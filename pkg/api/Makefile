@@ -1,5 +1,3 @@
-SHELL:=/bin/bash
-
 .PHONY: generate
 
 generate: gqlgen.yml graph/schema.graphqls

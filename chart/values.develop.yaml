@@ -1,3 +1,0 @@
-dbPorts:
-  - port: 5432
-    nodePort: 30432
