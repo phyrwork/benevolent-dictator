@@ -25,8 +25,9 @@ func main() {
 	}
 
 	dsn := fmt.Sprintf(
-		"host=%s user=dictator password=dictator dbname=dictator sslmode=disable",
-		os.Getenv("DB_SERVICE_HOST"))
+		"host=%s user=dictator password=%s dbname=dictator sslmode=disable",
+		os.Getenv("DB_SERVICE_HOST"),
+		os.Getenv("DB_SERVICE_PASSWORD"))
 	log.Printf("database dsn=%s", dsn)
 
 	var err error

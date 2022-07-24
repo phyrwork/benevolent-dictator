@@ -1,7 +1,7 @@
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: benedict
+  name: db
   labels:
     type: local
     app: db
@@ -12,7 +12,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/mnt/data"
+    path: "/mnt/data/benedict"  # TODO: understand what this means locally and in DO
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -51,6 +51,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: db
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-auth-app
+                  key: password
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: data
@@ -68,7 +74,6 @@ metadata:
 data:
   POSTGRES_DB: dictator
   POSTGRES_USER: dictator
-  POSTGRES_PASSWORD: dictator
 ---
 apiVersion: v1
 kind: Service

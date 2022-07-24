@@ -18,6 +18,12 @@ spec:
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 8080
+          env:
+            - name: DB_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-auth-app
+                  key: password
 ---
 apiVersion: v1
 kind: Service
