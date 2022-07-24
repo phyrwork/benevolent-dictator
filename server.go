@@ -53,7 +53,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/query", auth.Handle(srv))
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	mux.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+	mux.Handle("/", http.FileServer(http.Dir("dist"))) // TODO: What to do about development environment?
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

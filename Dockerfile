@@ -12,9 +12,9 @@ COPY go.sum .
 COPY tools.go .
 RUN go mod download
 
-COPY cmd/. cmd/
+COPY server.go .
 COPY pkg/. pkg/
-RUN cd cmd/api && go build
+RUN go build server.go
 
 
 ##
@@ -22,12 +22,12 @@ RUN cd cmd/api && go build
 ##
 FROM gcr.io/distroless/base-debian10
 
-WORKDIR /
+WORKDIR /app
 
-COPY --from=build /app/cmd/api/api /usr/local/bin/api
-
+COPY --from=build /app/server .
+COPY web/build dist/
 EXPOSE 8080
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/usr/local/bin/api"]
+ENTRYPOINT ["/app/server"]
