@@ -26,8 +26,32 @@ metadata:
   labels:
     app: app
 spec:
-  type: LoadBalancer
   ports:
     - port: 8080
   selector:
     app: app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  number: 8080
+          - path: /query
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  number: 8080
