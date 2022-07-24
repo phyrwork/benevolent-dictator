@@ -34,7 +34,7 @@ func main() {
 	var db *gorm.DB
 	for db == nil {
 		db, err = database.Open(dsn)
-		if db == nil {
+		if db != nil {
 			break
 		}
 		log.Printf("database open error: %v", err)
